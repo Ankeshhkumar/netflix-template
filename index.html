@@ -331,9 +331,11 @@
   #screen-credits{
     background:#000;
     display:flex;
+    flex-direction:column;
     align-items:center;
     justify-content:center;
     padding:24px;
+    position:relative;
   }
   .credits-wrap{
     display:flex;
@@ -479,6 +481,10 @@
         <div class="credits-row"><div class="credits-role">Produced by</div><div class="credits-val" contenteditable="true">Patience &amp; support</div></div>
       </div>
     </div>
+    <button id="save-version-btn" onclick="saveMyVersion()"
+      style="position:absolute; top:14px; right:14px; background:var(--red); color:#fff; border:none; padding:6px 12px; border-radius:16px; font-size:11px; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.5);">
+      💾 Save
+    </button>
   </div>
 
 </div>
@@ -580,6 +586,38 @@
     const reader = new FileReader();
     reader.onload = ev => cb(ev.target.result);
     reader.readAsDataURL(file);
+  }
+
+  // ---- Save personalized version as a standalone HTML file ----
+  function saveMyVersion(){
+    // Clone the whole document so we don't disturb the live page
+    const clone = document.documentElement.cloneNode(true);
+
+    // Remove the save button itself from the saved copy
+    const btn = clone.querySelector('#save-version-btn');
+    if(btn) btn.remove();
+
+    // Make sure the saved copy always opens on the intro screen
+    clone.querySelectorAll('.screen').forEach(s=>{
+      s.classList.toggle('active', s.id === 'screen-intro');
+    });
+    clone.querySelectorAll('.nav-btn').forEach(b=>{
+      b.classList.toggle('current', b.dataset.s === 'intro');
+    });
+
+    const finalHtml = '<!DOCTYPE html>\n' + clone.outerHTML;
+    const blob = new Blob([finalHtml], {type:'text/html'});
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'index.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 5000);
+
+    alert('Saved! Check your Downloads (or tap Share → Save to Files on iPhone). Upload this index.html to your GitHub repo to replace the old one.');
   }
 
   goTo('intro');
