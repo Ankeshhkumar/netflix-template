@@ -511,6 +511,50 @@
 
   document.getElementById('screen-intro').addEventListener('click', ()=>goTo('profiles'));
 
+  // ---- Auto-save / restore (survives the browser reloading this tab) ----
+  const STORAGE_KEY = 'netflix-gift-draft-v1';
+
+  function saveDraft(){
+    try{
+      const data = {};
+      document.querySelectorAll('[data-store]').forEach(el=>{
+        const key = el.getAttribute('data-store');
+        if(el.tagName === 'INPUT') return;
+        if(el.classList.contains('bg-store')){
+          data[key] = el.style.backgroundImage || '';
+        } else {
+          data[key] = el.innerHTML;
+        }
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }catch(err){
+      console.warn('Could not auto-save (storage may be full):', err);
+    }
+  }
+
+  function restoreDraft(){
+    let data;
+    try{ data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+    catch(err){ data = {}; }
+    Object.keys(data).forEach(key=>{
+      const el = document.querySelector(`[data-store="${key}"]`);
+      if(!el) return;
+      if(el.classList.contains('bg-store')){
+        if(data[key]){
+          el.style.backgroundImage = data[key];
+          const placeholder = el.querySelector('span');
+          if(placeholder) placeholder.style.display = 'none';
+          if(el.id === 'video-bg'){
+            const vBtn = document.getElementById('video-upload-btn');
+            if(vBtn) vBtn.style.display = 'none';
+          }
+        }
+      } else {
+        el.innerHTML = data[key];
+      }
+    });
+  }
+
   // ---- Profiles ----
   const profileData = [
     {label:'1 month'}, {label:'3 months'}, {label:'5 months'}, {label:'8 months'}
@@ -520,12 +564,12 @@
     const wrap = document.createElement('div');
     wrap.className = 'profile';
     wrap.innerHTML = `
-      <div class="profile-pic" id="profile-pic-${i}" onclick="goTo('home')">
+      <div class="profile-pic bg-store" id="profile-pic-${i}" data-store="profile-pic-${i}" onclick="goTo('home')">
         <span id="profile-placeholder-${i}">+ photo</span>
         <div class="upload-btn" onclick="event.stopPropagation();document.getElementById('profile-upload-${i}').click()">✎</div>
         <input type="file" id="profile-upload-${i}" accept="image/*">
       </div>
-      <div class="profile-label" contenteditable="true">${p.label}</div>
+      <div class="profile-label" contenteditable="true" data-store="profile-label-${i}">${p.label}</div>
     `;
     profilesRow.appendChild(wrap);
     document.getElementById(`profile-upload-${i}`).addEventListener('change', e=>{
@@ -533,6 +577,7 @@
         const pic = document.getElementById(`profile-pic-${i}`);
         pic.style.backgroundImage = `url(${url})`;
         document.getElementById(`profile-placeholder-${i}`).style.display='none';
+        saveDraft();
       });
     });
   });
@@ -542,13 +587,14 @@
     const container = document.getElementById(containerId);
     for(let i=0;i<count;i++){
       const t = document.createElement('div');
-      t.className = 'thumb';
+      t.className = 'thumb bg-store';
       t.id = `${prefix}-${i}`;
+      t.setAttribute('data-store', `${prefix}-${i}`);
       t.innerHTML = `<div class="upload-btn" onclick="document.getElementById('${prefix}-upload-${i}').click()">✎</div>
         <input type="file" id="${prefix}-upload-${i}" accept="image/*">`;
       container.appendChild(t);
       t.querySelector('input').addEventListener('change', e=>{
-        handleImage(e, url=>{ t.style.backgroundImage = `url(${url})`; });
+        handleImage(e, url=>{ t.style.backgroundImage = `url(${url})`; saveDraft(); });
       });
     }
   }
@@ -556,13 +602,23 @@
   buildRow('row-recent', 5, 'rec');
 
   // ---- Hero, video, credits uploads ----
+  document.getElementById('hero-bg').classList.add('bg-store');
+  document.getElementById('hero-bg').setAttribute('data-store','hero-bg');
+  document.getElementById('hero-title').setAttribute('data-store','hero-title');
+  document.getElementById('hero-desc').setAttribute('data-store','hero-desc');
+
   document.getElementById('hero-upload').addEventListener('change', e=>{
     handleImage(e, url=>{ document.getElementById('hero-bg').style.backgroundImage =
       `linear-gradient(90deg, rgba(0,0,0,0.85) 10%, rgba(0,0,0,0.15) 55%), linear-gradient(to top, #000 2%, transparent 40%), url(${url})`;
       document.getElementById('hero-bg').style.backgroundSize='cover';
       document.getElementById('hero-bg').style.backgroundPosition='center';
+      saveDraft();
     });
   });
+
+  document.getElementById('video-bg').classList.add('bg-store');
+  document.getElementById('video-bg').setAttribute('data-store','video-bg');
+  document.getElementById('video-caption').setAttribute('data-store','video-caption');
 
   document.getElementById('video-upload').addEventListener('change', e=>{
     handleImage(e, url=>{
@@ -570,14 +626,28 @@
       document.getElementById('video-bg').style.backgroundSize='cover';
       document.getElementById('video-bg').style.backgroundPosition='center';
       document.getElementById('video-upload-btn').style.display='none';
+      saveDraft();
     });
   });
+
+  document.getElementById('credits-photo').classList.add('bg-store');
+  document.getElementById('credits-photo').setAttribute('data-store','credits-photo');
 
   document.getElementById('credits-upload').addEventListener('change', e=>{
     handleImage(e, url=>{
       document.getElementById('credits-photo').style.backgroundImage = `url(${url})`;
       document.getElementById('credits-photo').style.backgroundSize='cover';
+      saveDraft();
     });
+  });
+
+  // Text fields: tag them for storage + save as the person types
+  document.querySelectorAll('.credits-val, .profile-label').forEach((el,i)=>{
+    if(!el.hasAttribute('data-store')) el.setAttribute('data-store', 'credits-'+i);
+  });
+  document.querySelectorAll('[contenteditable="true"]').forEach(el=>{
+    el.addEventListener('input', ()=>saveDraft());
+    el.addEventListener('blur', ()=>saveDraft());
   });
 
   function handleImage(e, cb){
@@ -588,8 +658,12 @@
     reader.readAsDataURL(file);
   }
 
+  // Restore any previously saved draft (handles tab reloads on mobile)
+  restoreDraft();
+
   // ---- Save personalized version as a standalone HTML file ----
   function saveMyVersion(){
+    saveDraft();
     // Clone the whole document so we don't disturb the live page
     const clone = document.documentElement.cloneNode(true);
 
