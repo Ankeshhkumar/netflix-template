@@ -4,232 +4,697 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Our Netflix</title>
-
-<link rel="manifest" href="manifest.json">
-
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Anton&family=Inter:wght@400;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Anton&family=Inter:wght@400;500;600;700&display=swap');
 
-:root{
-  --red:#e50914;
-}
+  :root{
+    --red:#e50914;
+    --red-dim:#b0060f;
+    --bg:#141414;
+    --bg2:#000000;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{
+    height:100%;
+    background:var(--bg2);
+    font-family:'Inter',sans-serif;
+    color:#fff;
+    overflow:hidden;
+  }
+  #app{
+    position:relative;
+    width:100%;
+    height:100vh;
+    max-height:100vh;
+  }
+  .screen{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .5s ease;
+    overflow-y:auto;
+    overflow-x:hidden;
+  }
+  .screen.active{
+    opacity:1;
+    pointer-events:auto;
+  }
+  .netflix-word{
+    font-family:'Bebas Neue',sans-serif;
+    color:var(--red);
+    letter-spacing:2px;
+  }
 
-body{
-  margin:0;
-  background:#000;
-  color:#fff;
-  font-family:'Inter';
-  overflow:hidden;
-}
+  /* ---------- INTRO ---------- */
+  #screen-intro{
+    background:#000;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .intro-logo{
+    font-family:'Anton', 'Bebas Neue', sans-serif;
+    font-weight:400;
+    font-size:22vw;
+    line-height:1;
+    color:var(--red);
+    letter-spacing:0px;
+    transform:scaleY(1.35) scaleX(0.78);
+    animation: introPulse 2.6s cubic-bezier(.2,.7,.3,1) forwards;
+    filter: drop-shadow(0 0 2px rgba(255,60,60,0.9)) drop-shadow(0 0 34px rgba(229,9,20,0.75));
+  }
+  @keyframes introPulse{
+    0%{   opacity:0;   filter: drop-shadow(0 0 0 rgba(229,9,20,0)); transform:scaleY(1.35) scaleX(0.78) scale(0.55); }
+    18%{  opacity:1; }
+    40%{  transform:scaleY(1.35) scaleX(0.78) scale(1.06); }
+    55%{  transform:scaleY(1.35) scaleX(0.78) scale(1); filter: drop-shadow(0 0 2px rgba(255,60,60,0.9)) drop-shadow(0 0 34px rgba(229,9,20,0.75)); }
+    88%{  opacity:1; transform:scaleY(1.35) scaleX(0.78) scale(1); }
+    100%{ opacity:0; transform:scaleY(1.35) scaleX(0.78) scale(1); }
+  }
+  .skip-hint{
+    position:absolute;
+    bottom:30px;
+    font-size:12px;
+    color:#666;
+    letter-spacing:1px;
+  }
 
-/* Smooth transitions */
-.screen{
-  position:absolute;
-  inset:0;
-  opacity:0;
-  transform:scale(1.05);
-  transition:all .5s;
-  pointer-events:none;
-}
-.screen.active{
-  opacity:1;
-  transform:scale(1);
-  pointer-events:auto;
-}
+  /* ---------- WHO'S WATCHING ---------- */
+  #screen-profiles{
+    background:radial-gradient(ellipse at top, #2b2b2b 0%, #000 70%);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:20px;
+  }
+  #screen-profiles h1{
+    font-size:clamp(22px,5vw,36px);
+    font-weight:500;
+    margin-bottom:36px;
+  }
+  .profiles-row{
+    display:flex;
+    gap:22px;
+    flex-wrap:wrap;
+    justify-content:center;
+    max-width:640px;
+  }
+  .profile{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+    cursor:pointer;
+  }
+  .profile-pic{
+    width:22vw;
+    height:22vw;
+    max-width:110px;
+    max-height:110px;
+    border-radius:6px;
+    background:#333 center/cover no-repeat;
+    border:3px solid transparent;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:11px;
+    color:#888;
+    position:relative;
+    transition:border-color .15s ease, transform .15s ease;
+  }
+  .profile:hover .profile-pic{
+    border-color:#fff;
+    transform:scale(1.04);
+  }
+  .profile-label{
+    font-size:14px;
+    color:#aaa;
+    outline:none;
+    min-width:60px;
+  }
+  .profile-label:focus{ color:#fff; }
+  .upload-btn{
+    position:absolute;
+    bottom:4px;
+    right:4px;
+    background:rgba(0,0,0,0.7);
+    border:1px solid #666;
+    color:#fff;
+    font-size:14px;
+    width:26px;
+    height:26px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+  }
+  .manage-btn{
+    margin-top:44px;
+    padding:10px 24px;
+    background:transparent;
+    border:1px solid #808080;
+    color:#808080;
+    letter-spacing:2px;
+    font-size:13px;
+    cursor:default;
+  }
 
-/* Intro */
-#screen-intro{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-}
-.intro-logo{
-  font-size:22vw;
-  color:var(--red);
-  animation:introZoom 2.8s forwards;
-}
-@keyframes introZoom{
-  0%{transform:scale(.6);opacity:0;}
-  40%{transform:scale(1.1);opacity:1;}
-  100%{opacity:0;}
-}
+  /* ---------- HOMEPAGE ---------- */
+  #screen-home{ background:var(--bg2); }
+  .nav{
+    position:sticky;
+    top:0;
+    z-index:5;
+    display:flex;
+    align-items:center;
+    gap:22px;
+    padding:16px 24px;
+    background:linear-gradient(to bottom, rgba(0,0,0,0.85), transparent);
+  }
+  .nav .netflix-word{ font-size:24px; }
+  .nav-links{
+    display:none;
+    gap:16px;
+    font-size:13px;
+    color:#e5e5e5;
+  }
+  @media(min-width:640px){ .nav-links{ display:flex; } }
+  .hero{
+    position:relative;
+    min-height:62vh;
+    background:linear-gradient(90deg, rgba(0,0,0,0.85) 10%, rgba(0,0,0,0.15) 55%),
+               linear-gradient(to top, var(--bg2) 2%, transparent 40%),
+               #333 center/cover no-repeat;
+    display:flex;
+    align-items:flex-end;
+    padding:20px 24px 40px;
+  }
+  .hero-inner{ max-width:520px; }
+  .hero-eyebrow{
+    font-size:12px;
+    letter-spacing:2px;
+    color:#e5e5e5;
+    margin-bottom:8px;
+  }
+  .hero-title{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:clamp(32px,8vw,56px);
+    line-height:1;
+    letter-spacing:1px;
+    outline:none;
+  }
+  .hero-desc{
+    margin-top:14px;
+    font-size:14px;
+    color:#d2d2d2;
+    outline:none;
+    max-width:440px;
+  }
+  .hero-btns{
+    display:flex;
+    gap:12px;
+    margin-top:18px;
+  }
+  .btn{
+    padding:9px 22px;
+    border-radius:4px;
+    font-size:14px;
+    font-weight:600;
+    border:none;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .btn-play{ background:#fff; color:#000; }
+  .btn-info{ background:rgba(109,109,110,0.7); color:#fff; }
 
-/* Hero */
-.hero{
-  height:60vh;
-  display:flex;
-  align-items:flex-end;
-  padding:20px;
-  background:#333 center/cover;
-}
-.hero-title{
-  font-family:'Bebas Neue';
-  font-size:48px;
-  text-shadow:0 0 10px rgba(229,9,20,0.6);
-}
+  .row{ padding:26px 24px 6px; }
+  .row h3{ font-size:16px; margin-bottom:10px; font-weight:600; }
+  .row-scroll{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    padding-bottom:10px;
+  }
+  .thumb{
+    flex:0 0 auto;
+    width:150px;
+    height:88px;
+    border-radius:3px;
+    background:#333 center/cover no-repeat;
+    position:relative;
+    cursor:pointer;
+  }
+  .thumb .upload-btn{ opacity:0; transition:opacity .15s; }
+  .thumb:hover .upload-btn{ opacity:1; }
 
-/* Editable fix */
-[contenteditable]:focus{
-  outline:none;
-  border-bottom:1px dashed #aaa;
-}
+  /* ---------- VIDEO ---------- */
+  #screen-video{
+    background:#000;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .video-frame{
+    position:relative;
+    width:100%;
+    height:100%;
+    background:#111 center/cover no-repeat;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .video-topbar{
+    position:absolute;
+    top:0; left:0; right:0;
+    padding:16px 20px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
+  }
+  .video-controls{
+    position:absolute;
+    bottom:0; left:0; right:0;
+    padding:14px 20px 20px;
+    background:linear-gradient(to top, rgba(0,0,0,0.75), transparent);
+  }
+  .progress{
+    height:3px;
+    background:rgba(255,255,255,0.3);
+    border-radius:2px;
+    margin-bottom:14px;
+    position:relative;
+  }
+  .progress-fill{
+    position:absolute; left:0; top:0; bottom:0;
+    width:35%;
+    background:var(--red);
+    border-radius:2px;
+  }
+  .progress-dot{
+    position:absolute; top:50%; left:35%;
+    width:11px; height:11px; border-radius:50%;
+    background:var(--red);
+    transform:translate(-50%,-50%);
+  }
+  .ctrl-icons{ display:flex; gap:22px; align-items:center; font-size:20px; }
+  .video-caption{
+    position:absolute;
+    top:60px; left:20px;
+    font-size:13px;
+    color:#ccc;
+    outline:none;
+    max-width:80%;
+  }
+  .video-upload-btn{
+    position:absolute;
+    top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    background:rgba(0,0,0,0.6);
+    border:1px solid #888;
+    color:#fff;
+    padding:10px 18px;
+    border-radius:20px;
+    font-size:13px;
+    cursor:pointer;
+  }
 
-/* Video */
-video{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
+  /* ---------- CREDITS ---------- */
+  #screen-credits{
+    background:#000;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    position:relative;
+  }
+  .credits-wrap{
+    display:flex;
+    gap:24px;
+    align-items:center;
+    max-width:560px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+  .credits-photo{
+    width:220px;
+    height:280px;
+    border-radius:8px;
+    background:linear-gradient(160deg,#ff7a3d,#e50914) center/cover no-repeat;
+    position:relative;
+    flex:0 0 auto;
+  }
+  .credits-table{ font-size:14px; }
+  .credits-row{ display:flex; gap:16px; margin-bottom:10px; }
+  .credits-role{ color:#999; width:110px; text-align:right; flex:0 0 auto; }
+  .credits-val{ color:#fff; font-weight:600; outline:none; }
 
-/* Confetti */
-#confetti{
-  position:fixed;
-  inset:0;
-  pointer-events:none;
-}
+  /* ---------- NAV ARROWS ---------- */
+  .navigator{
+    position:fixed;
+    bottom:14px;
+    left:50%;
+    transform:translateX(-50%);
+    display:flex;
+    gap:10px;
+    z-index:50;
+    background:rgba(20,20,20,0.85);
+    padding:8px 12px;
+    border-radius:24px;
+    border:1px solid #333;
+  }
+  .nav-btn{
+    background:none;
+    border:none;
+    color:#ccc;
+    font-size:12px;
+    padding:6px 12px;
+    border-radius:16px;
+    cursor:pointer;
+  }
+  .nav-btn.current{ background:var(--red); color:#fff; }
+
+  input[type=file]{ display:none; }
+  ::-webkit-scrollbar{ height:6px; width:6px; }
+  ::-webkit-scrollbar-thumb{ background:#444; border-radius:4px; }
+
+  .edit-hint{
+    font-size:10px;
+    color:#666;
+    letter-spacing:.5px;
+    margin-top:4px;
+  }
 </style>
 </head>
-
 <body>
 
-<!-- AUDIO -->
-<audio id="bg-music" loop>
-  <source src="your-music.mp3" type="audio/mpeg">
-</audio>
+<div id="app">
 
-<audio id="intro-sound">
-  <source src="intro.mp3">
-</audio>
+  <!-- SCREEN 1: INTRO -->
+  <div class="screen active" id="screen-intro">
+    <div class="intro-logo">N</div>
+    <div class="skip-hint">tap anywhere to continue</div>
+  </div>
 
-<canvas id="confetti"></canvas>
+  <!-- SCREEN 2: WHO'S WATCHING -->
+  <div class="screen" id="screen-profiles">
+    <h1>Who's watching?</h1>
+    <div class="profiles-row" id="profiles-row"></div>
+    <button class="manage-btn">MANAGE PROFILES</button>
+  </div>
 
-<!-- INTRO -->
-<div id="screen-intro" class="screen active">
-  <div class="intro-logo">N</div>
-</div>
+  <!-- SCREEN 3: HOMEPAGE -->
+  <div class="screen" id="screen-home">
+    <div class="nav">
+      <div class="netflix-word">NETFLIX</div>
+      <div class="nav-links">
+        <span>Home</span><span>TV Shows</span><span>Movies</span><span>New &amp; Popular</span><span>My List</span>
+      </div>
+    </div>
 
-<!-- PROFILES -->
-<div id="screen-profiles" class="screen">
-  <h2>Who's watching?</h2>
-  <div onclick="goTo('home')">❤️ Us</div>
-</div>
+    <div class="hero" id="hero-bg">
+      <div class="upload-btn" style="top:70px;right:16px;bottom:auto;" onclick="document.getElementById('hero-upload').click()">✎</div>
+      <input type="file" id="hero-upload" accept="image/*">
+      <div class="hero-inner">
+        <div class="hero-eyebrow">N SERIES</div>
+        <div class="hero-title" contenteditable="true" id="hero-title">Life of Gia &amp; Aryan</div>
+        <div class="hero-desc" contenteditable="true" id="hero-desc">A story about two people who found their favorite person in each other. New episode drops every day.</div>
+        <div class="hero-btns">
+          <button class="btn btn-play" onclick="goTo('video')">▶ Play</button>
+          <button class="btn btn-info" onclick="goTo('credits')">ⓘ More Info</button>
+        </div>
+      </div>
+    </div>
 
-<!-- HOME -->
-<div id="screen-home" class="screen">
-  <div class="hero">
-    <div>
-      <div class="hero-title" contenteditable="true">Our Story ❤️</div>
-      <button onclick="goTo('video')">Play ▶</button>
+    <div class="row">
+      <h3>Popular on Netflix</h3>
+      <div class="row-scroll" id="row-popular"></div>
+    </div>
+    <div class="row">
+      <h3>Recently Watched</h3>
+      <div class="row-scroll" id="row-recent"></div>
+    </div>
+    <div style="height:90px;"></div>
+  </div>
+
+  <!-- SCREEN 4: VIDEO -->
+  <div class="screen" id="screen-video">
+    <div class="video-frame" id="video-bg">
+      <div class="video-topbar">
+        <span style="font-size:14px;">✕</span>
+        <span class="netflix-word" style="font-size:16px;">NETFLIX</span>
+      </div>
+      <div class="video-caption" contenteditable="true" id="video-caption">every moment with you feels like the best scene of the movie 🎬❤️</div>
+      <div class="video-upload-btn" id="video-upload-btn" onclick="document.getElementById('video-upload').click()">＋ Add your photo/video here</div>
+      <input type="file" id="video-upload" accept="image/*,video/*">
+      <div class="video-controls">
+        <div class="progress"><div class="progress-fill"></div><div class="progress-dot"></div></div>
+        <div class="ctrl-icons">
+          <span>⏮</span><span>▶</span><span>⏭</span><span style="margin-left:auto;" onclick="goTo('credits')">Skip →</span>
+        </div>
+      </div>
     </div>
   </div>
+
+  <!-- SCREEN 5: CREDITS -->
+  <div class="screen" id="screen-credits">
+    <div class="credits-wrap">
+      <div class="credits-photo" id="credits-photo">
+        <div class="upload-btn" onclick="document.getElementById('credits-upload').click()">✎</div>
+        <input type="file" id="credits-upload" accept="image/*">
+      </div>
+      <div class="credits-table">
+        <div class="credits-row"><div class="credits-role">Directed by</div><div class="credits-val" contenteditable="true">God</div></div>
+        <div class="credits-row"><div class="credits-role">Cast</div><div class="credits-val" contenteditable="true">&nbsp;</div></div>
+        <div class="credits-row"><div class="credits-role">Boyfriend</div><div class="credits-val" contenteditable="true">[Your name]</div></div>
+        <div class="credits-row"><div class="credits-role">Girlfriend</div><div class="credits-val" contenteditable="true">[Partner's name]</div></div>
+        <div class="credits-row"><div class="credits-role">Written by</div><div class="credits-val" contenteditable="true">Fate &amp; destiny</div></div>
+        <div class="credits-row"><div class="credits-role">Produced by</div><div class="credits-val" contenteditable="true">Patience &amp; support</div></div>
+      </div>
+    </div>
+    <button id="save-version-btn" onclick="saveMyVersion()"
+      style="position:absolute; top:14px; right:14px; background:var(--red); color:#fff; border:none; padding:6px 12px; border-radius:16px; font-size:11px; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.5);">
+      💾 Save
+    </button>
+  </div>
+
 </div>
 
-<!-- VIDEO -->
-<div id="screen-video" class="screen">
-  <video id="real-video" controls style="display:none"></video>
-  <button onclick="upload()">Upload</button>
-  <input type="file" id="video-upload" hidden>
-  <div id="video-caption"></div>
-</div>
-
-<!-- CREDITS -->
-<div id="screen-credits" class="screen">
-  <h2>Made with ❤️</h2>
+<div class="navigator">
+  <button class="nav-btn" data-s="intro" onclick="goTo('intro')">Intro</button>
+  <button class="nav-btn" data-s="profiles" onclick="goTo('profiles')">Profiles</button>
+  <button class="nav-btn" data-s="home" onclick="goTo('home')">Home</button>
+  <button class="nav-btn" data-s="video" onclick="goTo('video')">Video</button>
+  <button class="nav-btn" data-s="credits" onclick="goTo('credits')">Credits</button>
 </div>
 
 <script>
+  const screens = ['intro','profiles','home','video','credits'];
 
-/* Navigation */
-const screens=['intro','profiles','home','video','credits'];
-function goTo(name){
-  screens.forEach(s=>{
-    document.getElementById('screen-'+s)
-    .classList.toggle('active',s===name);
-  });
-
-  if(name==='video'){
-    typeText(document.getElementById('video-caption'),
-    "every moment with you feels like the best scene ❤️");
+  function goTo(name){
+    screens.forEach(s=>{
+      document.getElementById('screen-'+s).classList.toggle('active', s===name);
+    });
+    document.querySelectorAll('.nav-btn').forEach(b=>{
+      b.classList.toggle('current', b.dataset.s===name);
+    });
   }
 
-  if(name==='credits'){
-    startConfetti();
-  }
-}
+  document.getElementById('screen-intro').addEventListener('click', ()=>goTo('profiles'));
 
-/* Intro click */
-document.getElementById('screen-intro').onclick=()=>{
-  document.getElementById('intro-sound').play().catch(()=>{});
-  goTo('profiles');
-};
+  // ---- Auto-save / restore (survives the browser reloading this tab) ----
+  const STORAGE_KEY = 'netflix-gift-draft-v1';
 
-/* Auto intro */
-setTimeout(()=>goTo('profiles'),2800);
-
-/* Music */
-document.body.addEventListener('click',()=>{
-  const m=document.getElementById('bg-music');
-  if(m.paused) m.play().catch(()=>{});
-},{once:true});
-
-/* Upload */
-function upload(){
-  document.getElementById('video-upload').click();
-}
-document.getElementById('video-upload').addEventListener('change',e=>{
-  const file=e.target.files[0];
-  const url=URL.createObjectURL(file);
-  const v=document.getElementById('real-video');
-
-  if(file.type.startsWith('video')){
-    v.src=url;
-    v.style.display='block';
-    v.play();
-  }
-});
-
-/* Typing */
-function typeText(el,text){
-  let i=0;
-  el.innerHTML='';
-  function t(){
-    if(i<text.length){
-      el.innerHTML+=text[i++];
-      setTimeout(t,40);
+  function saveDraft(){
+    try{
+      const data = {};
+      document.querySelectorAll('[data-store]').forEach(el=>{
+        const key = el.getAttribute('data-store');
+        if(el.tagName === 'INPUT') return;
+        if(el.classList.contains('bg-store')){
+          data[key] = el.style.backgroundImage || '';
+        } else {
+          data[key] = el.innerHTML;
+        }
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }catch(err){
+      console.warn('Could not auto-save (storage may be full):', err);
     }
   }
-  t();
-}
 
-/* Confetti */
-function startConfetti(){
-  const c=document.getElementById('confetti');
-  const ctx=c.getContext('2d');
-  c.width=innerWidth;
-  c.height=innerHeight;
-
-  const p=Array.from({length:80},()=>({
-    x:Math.random()*c.width,
-    y:Math.random()*c.height
-  }));
-
-  setInterval(()=>{
-    ctx.clearRect(0,0,c.width,c.height);
-    p.forEach(i=>{
-      i.y+=3;
-      ctx.fillStyle="red";
-      ctx.fillRect(i.x,i.y,4,4);
-      if(i.y>c.height) i.y=0;
+  function restoreDraft(){
+    let data;
+    try{ data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+    catch(err){ data = {}; }
+    Object.keys(data).forEach(key=>{
+      const el = document.querySelector(`[data-store="${key}"]`);
+      if(!el) return;
+      if(el.classList.contains('bg-store')){
+        if(data[key]){
+          el.style.backgroundImage = data[key];
+          const placeholder = el.querySelector('span');
+          if(placeholder) placeholder.style.display = 'none';
+          if(el.id === 'video-bg'){
+            const vBtn = document.getElementById('video-upload-btn');
+            if(vBtn) vBtn.style.display = 'none';
+          }
+        }
+      } else {
+        el.innerHTML = data[key];
+      }
     });
-  },30);
-}
+  }
 
-/* PWA */
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js');
-}
+  // ---- Profiles ----
+  const profileData = [
+    {label:'1 month'}, {label:'3 months'}, {label:'5 months'}, {label:'8 months'}
+  ];
+  const profilesRow = document.getElementById('profiles-row');
+  profileData.forEach((p,i)=>{
+    const wrap = document.createElement('div');
+    wrap.className = 'profile';
+    wrap.innerHTML = `
+      <div class="profile-pic bg-store" id="profile-pic-${i}" data-store="profile-pic-${i}" onclick="goTo('home')">
+        <span id="profile-placeholder-${i}">+ photo</span>
+        <div class="upload-btn" onclick="event.stopPropagation();document.getElementById('profile-upload-${i}').click()">✎</div>
+        <input type="file" id="profile-upload-${i}" accept="image/*">
+      </div>
+      <div class="profile-label" contenteditable="true" data-store="profile-label-${i}">${p.label}</div>
+    `;
+    profilesRow.appendChild(wrap);
+    document.getElementById(`profile-upload-${i}`).addEventListener('change', e=>{
+      handleImage(e, url=>{
+        const pic = document.getElementById(`profile-pic-${i}`);
+        pic.style.backgroundImage = `url(${url})`;
+        document.getElementById(`profile-placeholder-${i}`).style.display='none';
+        saveDraft();
+      });
+    });
+  });
 
+  // ---- Homepage rows ----
+  function buildRow(containerId, count, prefix){
+    const container = document.getElementById(containerId);
+    for(let i=0;i<count;i++){
+      const t = document.createElement('div');
+      t.className = 'thumb bg-store';
+      t.id = `${prefix}-${i}`;
+      t.setAttribute('data-store', `${prefix}-${i}`);
+      t.innerHTML = `<div class="upload-btn" onclick="document.getElementById('${prefix}-upload-${i}').click()">✎</div>
+        <input type="file" id="${prefix}-upload-${i}" accept="image/*">`;
+      container.appendChild(t);
+      t.querySelector('input').addEventListener('change', e=>{
+        handleImage(e, url=>{ t.style.backgroundImage = `url(${url})`; saveDraft(); });
+      });
+    }
+  }
+  buildRow('row-popular', 5, 'pop');
+  buildRow('row-recent', 5, 'rec');
+
+  // ---- Hero, video, credits uploads ----
+  document.getElementById('hero-bg').classList.add('bg-store');
+  document.getElementById('hero-bg').setAttribute('data-store','hero-bg');
+  document.getElementById('hero-title').setAttribute('data-store','hero-title');
+  document.getElementById('hero-desc').setAttribute('data-store','hero-desc');
+
+  document.getElementById('hero-upload').addEventListener('change', e=>{
+    handleImage(e, url=>{ document.getElementById('hero-bg').style.backgroundImage =
+      `linear-gradient(90deg, rgba(0,0,0,0.85) 10%, rgba(0,0,0,0.15) 55%), linear-gradient(to top, #000 2%, transparent 40%), url(${url})`;
+      document.getElementById('hero-bg').style.backgroundSize='cover';
+      document.getElementById('hero-bg').style.backgroundPosition='center';
+      saveDraft();
+    });
+  });
+
+  document.getElementById('video-bg').classList.add('bg-store');
+  document.getElementById('video-bg').setAttribute('data-store','video-bg');
+  document.getElementById('video-caption').setAttribute('data-store','video-caption');
+
+  document.getElementById('video-upload').addEventListener('change', e=>{
+    handleImage(e, url=>{
+      document.getElementById('video-bg').style.backgroundImage = `url(${url})`;
+      document.getElementById('video-bg').style.backgroundSize='cover';
+      document.getElementById('video-bg').style.backgroundPosition='center';
+      document.getElementById('video-upload-btn').style.display='none';
+      saveDraft();
+    });
+  });
+
+  document.getElementById('credits-photo').classList.add('bg-store');
+  document.getElementById('credits-photo').setAttribute('data-store','credits-photo');
+
+  document.getElementById('credits-upload').addEventListener('change', e=>{
+    handleImage(e, url=>{
+      document.getElementById('credits-photo').style.backgroundImage = `url(${url})`;
+      document.getElementById('credits-photo').style.backgroundSize='cover';
+      saveDraft();
+    });
+  });
+
+  // Text fields: tag them for storage + save as the person types
+  document.querySelectorAll('.credits-val, .profile-label').forEach((el,i)=>{
+    if(!el.hasAttribute('data-store')) el.setAttribute('data-store', 'credits-'+i);
+  });
+  document.querySelectorAll('[contenteditable="true"]').forEach(el=>{
+    el.addEventListener('input', ()=>saveDraft());
+    el.addEventListener('blur', ()=>saveDraft());
+  });
+
+  function handleImage(e, cb){
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => cb(ev.target.result);
+    reader.readAsDataURL(file);
+  }
+
+  // Restore any previously saved draft (handles tab reloads on mobile)
+  restoreDraft();
+
+  // ---- Save personalized version as a standalone HTML file ----
+  function saveMyVersion(){
+    saveDraft();
+    // Clone the whole document so we don't disturb the live page
+    const clone = document.documentElement.cloneNode(true);
+
+    // Remove the save button itself from the saved copy
+    const btn = clone.querySelector('#save-version-btn');
+    if(btn) btn.remove();
+
+    // Make sure the saved copy always opens on the intro screen
+    clone.querySelectorAll('.screen').forEach(s=>{
+      s.classList.toggle('active', s.id === 'screen-intro');
+    });
+    clone.querySelectorAll('.nav-btn').forEach(b=>{
+      b.classList.toggle('current', b.dataset.s === 'intro');
+    });
+
+    const finalHtml = '<!DOCTYPE html>\n' + clone.outerHTML;
+    const blob = new Blob([finalHtml], {type:'text/html'});
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'index.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 5000);
+
+    alert('Saved! Check your Downloads (or tap Share → Save to Files on iPhone). Upload this index.html to your GitHub repo to replace the old one.');
+  }
+
+  goTo('intro');
 </script>
-
 </body>
 </html>
