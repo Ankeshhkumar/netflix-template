@@ -5,73 +5,56 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Our Netflix</title>
 
+<link rel="manifest" href="manifest.json">
+
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Anton&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Anton&family=Inter:wght@400;600&display=swap');
 
 :root{
   --red:#e50914;
-  --bg:#141414;
 }
 
-*{margin:0;padding:0;box-sizing:border-box;}
-
 body{
+  margin:0;
   background:#000;
   color:#fff;
-  font-family:'Inter',sans-serif;
+  font-family:'Inter';
   overflow:hidden;
 }
 
-/* 🔥 Smooth animation */
+/* Smooth transitions */
 .screen{
   position:absolute;
   inset:0;
   opacity:0;
   transform:scale(1.05);
-  transition:opacity .5s ease, transform .5s ease;
+  transition:all .5s;
+  pointer-events:none;
 }
 .screen.active{
   opacity:1;
   transform:scale(1);
+  pointer-events:auto;
 }
 
-.netflix-word{
-  font-family:'Bebas Neue';
-  color:var(--red);
-}
-
-/* INTRO */
+/* Intro */
 #screen-intro{
   display:flex;
   justify-content:center;
   align-items:center;
-  background:#000;
 }
 .intro-logo{
-  font-size:20vw;
+  font-size:22vw;
   color:var(--red);
+  animation:introZoom 2.8s forwards;
+}
+@keyframes introZoom{
+  0%{transform:scale(.6);opacity:0;}
+  40%{transform:scale(1.1);opacity:1;}
+  100%{opacity:0;}
 }
 
-/* PROFILES */
-#screen-profiles{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-}
-.profile{
-  cursor:pointer;
-}
-.profile-pic{
-  width:90px;height:90px;
-  background:#333;
-  border-radius:6px;
-}
-.profile:active .profile-pic{
-  transform:scale(0.95);
-}
-
-/* HERO */
+/* Hero */
 .hero{
   height:60vh;
   display:flex;
@@ -80,154 +63,172 @@ body{
   background:#333 center/cover;
 }
 .hero-title{
-  font-size:40px;
   font-family:'Bebas Neue';
+  font-size:48px;
   text-shadow:0 0 10px rgba(229,9,20,0.6);
 }
-[contenteditable="true"]:focus{
+
+/* Editable fix */
+[contenteditable]:focus{
   outline:none;
-  border-bottom:1px dashed rgba(255,255,255,0.3);
+  border-bottom:1px dashed #aaa;
 }
 
-/* VIDEO */
-#screen-video{
-  background:#000;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.video-frame{
-  width:100%;
-  height:100%;
-  position:relative;
-}
+/* Video */
 video{
   width:100%;
   height:100%;
   object-fit:cover;
 }
 
-/* NAV */
-.navigator{
+/* Confetti */
+#confetti{
   position:fixed;
-  bottom:10px;
-  left:50%;
-  transform:translateX(-50%);
-}
-.nav-btn{
-  margin:4px;
-}
-
-/* CREDITS */
-#screen-credits{
-  display:flex;
-  justify-content:center;
-  align-items:center;
+  inset:0;
+  pointer-events:none;
 }
 </style>
 </head>
 
 <body>
 
-<!-- 🎵 BACKGROUND MUSIC -->
+<!-- AUDIO -->
 <audio id="bg-music" loop>
   <source src="your-music.mp3" type="audio/mpeg">
 </audio>
 
+<audio id="intro-sound">
+  <source src="intro.mp3">
+</audio>
+
+<canvas id="confetti"></canvas>
+
+<!-- INTRO -->
 <div id="screen-intro" class="screen active">
   <div class="intro-logo">N</div>
 </div>
 
+<!-- PROFILES -->
 <div id="screen-profiles" class="screen">
   <h2>Who's watching?</h2>
-  <div class="profile" onclick="goTo('home')">
-    <div class="profile-pic"></div>
-    <div contenteditable="true">Us ❤️</div>
-  </div>
+  <div onclick="goTo('home')">❤️ Us</div>
 </div>
 
+<!-- HOME -->
 <div id="screen-home" class="screen">
   <div class="hero">
     <div>
-      <div class="hero-title" contenteditable="true">
-        Our Story ❤️
-      </div>
+      <div class="hero-title" contenteditable="true">Our Story ❤️</div>
       <button onclick="goTo('video')">Play ▶</button>
     </div>
   </div>
 </div>
 
+<!-- VIDEO -->
 <div id="screen-video" class="screen">
-  <div class="video-frame">
-
-    <!-- 🎬 REAL VIDEO -->
-    <video id="real-video" controls style="display:none;"></video>
-
-    <button id="video-upload-btn"
-      onclick="document.getElementById('video-upload').click()">
-      Upload Video / Image
-    </button>
-
-    <input type="file" id="video-upload" accept="image/*,video/*">
-  </div>
+  <video id="real-video" controls style="display:none"></video>
+  <button onclick="upload()">Upload</button>
+  <input type="file" id="video-upload" hidden>
+  <div id="video-caption"></div>
 </div>
 
+<!-- CREDITS -->
 <div id="screen-credits" class="screen">
-  <div>
-    <h2>Made with ❤️</h2>
-    <div contenteditable="true">Your Name</div>
-  </div>
-</div>
-
-<!-- NAV -->
-<div class="navigator">
-  <button class="nav-btn" onclick="goTo('intro')">Intro</button>
-  <button class="nav-btn" onclick="goTo('profiles')">Profiles</button>
-  <button class="nav-btn" onclick="goTo('home')">Home</button>
-  <button class="nav-btn" onclick="goTo('video')">Video</button>
-  <button class="nav-btn" onclick="goTo('credits')">Credits</button>
+  <h2>Made with ❤️</h2>
 </div>
 
 <script>
-const screens=['intro','profiles','home','video','credits'];
 
+/* Navigation */
+const screens=['intro','profiles','home','video','credits'];
 function goTo(name){
   screens.forEach(s=>{
     document.getElementById('screen-'+s)
-      .classList.toggle('active',s===name);
+    .classList.toggle('active',s===name);
   });
+
+  if(name==='video'){
+    typeText(document.getElementById('video-caption'),
+    "every moment with you feels like the best scene ❤️");
+  }
+
+  if(name==='credits'){
+    startConfetti();
+  }
 }
 
-/* 🎬 VIDEO UPLOAD */
-document.getElementById('video-upload').addEventListener('change', e=>{
-  const file=e.target.files[0];
-  if(!file) return;
+/* Intro click */
+document.getElementById('screen-intro').onclick=()=>{
+  document.getElementById('intro-sound').play().catch(()=>{});
+  goTo('profiles');
+};
 
-  const url=URL.createObjectURL(file);
-  const video=document.getElementById('real-video');
+/* Auto intro */
+setTimeout(()=>goTo('profiles'),2800);
 
-  if(file.type.startsWith('video')){
-    video.src=url;
-    video.style.display='block';
-    document.getElementById('video-upload-btn').style.display='none';
-  }
-});
-
-/* 🎵 MUSIC PLAY */
+/* Music */
 document.body.addEventListener('click',()=>{
-  const music=document.getElementById('bg-music');
-  if(music.paused){
-    music.play().catch(()=>{});
-  }
+  const m=document.getElementById('bg-music');
+  if(m.paused) m.play().catch(()=>{});
 },{once:true});
 
-/* 💾 STORAGE FIX */
-window.addEventListener('beforeunload',()=>{
-  localStorage.setItem('saved','true');
+/* Upload */
+function upload(){
+  document.getElementById('video-upload').click();
+}
+document.getElementById('video-upload').addEventListener('change',e=>{
+  const file=e.target.files[0];
+  const url=URL.createObjectURL(file);
+  const v=document.getElementById('real-video');
+
+  if(file.type.startsWith('video')){
+    v.src=url;
+    v.style.display='block';
+    v.play();
+  }
 });
 
-/* ⚡ AUTO SKIP INTRO */
-setTimeout(()=>goTo('profiles'),2800);
+/* Typing */
+function typeText(el,text){
+  let i=0;
+  el.innerHTML='';
+  function t(){
+    if(i<text.length){
+      el.innerHTML+=text[i++];
+      setTimeout(t,40);
+    }
+  }
+  t();
+}
+
+/* Confetti */
+function startConfetti(){
+  const c=document.getElementById('confetti');
+  const ctx=c.getContext('2d');
+  c.width=innerWidth;
+  c.height=innerHeight;
+
+  const p=Array.from({length:80},()=>({
+    x:Math.random()*c.width,
+    y:Math.random()*c.height
+  }));
+
+  setInterval(()=>{
+    ctx.clearRect(0,0,c.width,c.height);
+    p.forEach(i=>{
+      i.y+=3;
+      ctx.fillStyle="red";
+      ctx.fillRect(i.x,i.y,4,4);
+      if(i.y>c.height) i.y=0;
+    });
+  },30);
+}
+
+/* PWA */
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js');
+}
+
 </script>
 
 </body>
